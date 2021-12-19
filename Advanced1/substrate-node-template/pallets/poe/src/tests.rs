@@ -37,7 +37,7 @@ fn test_create_claim_exceed_size_limit() {
         assert_noop!(
             Poe::create_claim(
                 Origin::signed(1),
-                "The is a claim with large size, content ++++++++++++++++++++++++++++++++ "
+                "This is a claim with large size, content ++++++++++++++++++++++++++++++++ "
                     .to_string()
                     .as_bytes()
                     .to_vec()
