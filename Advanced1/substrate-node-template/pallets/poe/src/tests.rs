@@ -32,15 +32,13 @@ fn test_create_claim() {
 
 #[test]
 fn test_create_claim_exceed_size_limit() {
+    let limit_size = ClaimSizeLimit::get() as usize;
     new_test_ext().execute_with(|| {
         // test claim with large size.
         assert_noop!(
             Poe::create_claim(
                 Origin::signed(1),
-                "This is a claim with large size, content ++++++++++++++++++++++++++++++++ "
-                    .to_string()
-                    .as_bytes()
-                    .to_vec()
+                vec![0u8; limit_size.checked_add(1).unwrap()]
             ),
             Error::<Test>::ClaimSizeOverflow
         );
