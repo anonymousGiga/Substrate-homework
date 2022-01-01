@@ -31,7 +31,8 @@ pub mod pallet {
 	}
 
 	type AccountOf<T> = <T as frame_system::Config>::AccountId;
-	type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	type BalanceOf<T> =
+		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -41,7 +42,7 @@ pub mod pallet {
 		type KittyIndex: Parameter + Default + AtLeast32Bit + Copy + Bounded + EncodeLike;
 
 		#[pallet::constant]
-        type StakeAmountForKitty: Get<BalanceOf<Self>>;
+		type StakeAmountForKitty: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -53,12 +54,12 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// A new Kitty was sucessfully created.
 		Created(T::AccountId, T::KittyIndex),
-		/// Kitty price was sucessfully set and on sell. 
+		/// Kitty price was sucessfully set and on sell.
 		OnSell(T::AccountId, T::KittyIndex, Option<BalanceOf<T>>),
 		/// A Kitty was sucessfully transferred.
 		Transferred(T::AccountId, T::AccountId, T::KittyIndex),
 		/// A Kitty was sucessfully bought.
-		Bought(T::AccountId, T::AccountId, T::KittyIndex, BalanceOf<T>),
+		Bought(T::AccountId, T::AccountId, T::KittyIndex, Option<BalanceOf<T>>),
 	}
 
 	#[pallet::storage]
@@ -77,7 +78,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn kitties_list_for_sale)]
-	pub type ListForSale<T: Config> = StorageMap<_, Blake2_128Concat, T::KittyIndex, Option<BalanceOf<T>>, ValueQuery>;
+	pub type ListForSale<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::KittyIndex, Option<BalanceOf<T>>, ValueQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -175,7 +177,8 @@ pub mod pallet {
 			ensure!(kitty.owner != buyer, <Error<T>>::BuyerIsKittyOwner);
 
 			// Check the buyer has enough free balance.
-			let ask_price = Self::kitties_list_for_sale(&kitty_id).ok_or(<Error<T>>::KittyNotOnSale)?;
+			let ask_price =
+				Self::kitties_list_for_sale(&kitty_id).ok_or(<Error<T>>::KittyNotOnSale)?;
 			let stake = T::StakeAmountForKitty::get();
 			let free_balance = T::Currency::free_balance(&buyer);
 			ensure!(free_balance > (ask_price + stake), <Error<T>>::NotEnoughBalance);
@@ -190,7 +193,7 @@ pub mod pallet {
 			// Remove kitty from sale list.
 			ListForSale::<T>::remove(kitty_id);
 
-			Self::deposit_event(Event::Bought(buyer, seller, kitty_id, ask_price));
+			Self::deposit_event(Event::Bought(buyer, seller, kitty_id, Some(ask_price)));
 
 			Ok(())
 		}
@@ -234,8 +237,8 @@ pub mod pallet {
 			};
 
 			let stake = T::StakeAmountForKitty::get();
-            T::Currency::reserve(&owner, stake)
-                .map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
+			T::Currency::reserve(&owner, stake)
+				.map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
 
 			Kitties::<T>::insert(kitty_id, Some(kitty));
 			Owner::<T>::insert(kitty_id, Some(owner));
@@ -261,11 +264,10 @@ pub mod pallet {
 			// Update the kitty owner.
 			kitty.owner = to.clone();
 
-            // Staking from new owner and unstaking from the pre ownder
+			// Staking from new owner and unstaking from the pre ownder
 			let stake = T::StakeAmountForKitty::get();
-            T::Currency::reserve(&to, stake)
-                .map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
-            T::Currency::unreserve(&pre_owner, stake);
+			T::Currency::reserve(&to, stake).map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
+			T::Currency::unreserve(&pre_owner, stake);
 
 			// Inert kitty.
 			Kitties::<T>::insert(kitty_id, Some(kitty));
