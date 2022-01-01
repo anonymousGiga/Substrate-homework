@@ -3801,6 +3801,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "num-traits",
  "parity-scale-codec",
  "scale-info",
  "sp-core",

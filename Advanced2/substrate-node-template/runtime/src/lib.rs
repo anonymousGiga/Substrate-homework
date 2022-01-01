@@ -274,10 +274,17 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+parameter_types! {
+	pub const StakeAmountForKitty: u128 = 1_000;
+}
+
 /// Configure the pallet-kitties in pallets/kitties.
 impl pallet_kitties::Config for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type KittyIndex = u32;
+	type StakeAmountForKitty = StakeAmountForKitty;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
